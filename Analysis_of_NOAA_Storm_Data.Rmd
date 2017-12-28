@@ -1,0 +1,98 @@
+---
+title: "Analysis of NOAA Storm Data"
+author: "Lalitha"
+date: "December 28, 2017"
+output: html_document
+---
+
+## Introduction
+
+The purpose of this report is to explore the storm data collected by NOAA and analyse the natural disasters that cause most fatalities, injuries, property and crop damages.
+
+## Data Processing
+This step describes the process of downloading, cleaning and reading the storm data 
+
+```{r}
+temp <- tempfile()
+download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2",temp)
+data <- read.csv(bzfile(temp))
+data$EVTYPE = toupper(data$EVTYPE)
+
+reduced.data <- data[,c("EVTYPE", "FATALITIES", "INJURIES", "PROPDMG", "CROPDMG")]
+
+head(data)
+
+data[data$EVTYPE == "TSTM WIND", ]$EVTYPE = "THUNDERSTORM WIND"
+data[data$EVTYPE == "THUNDERSTORM WINDS", ]$EVTYPE = "THUNDERSTORM WIND"
+data[data$EVTYPE == "RIVER FLOOD", ]$EVTYPE = "FLOOD"
+data[data$EVTYPE == "HURRICANE/TYPHOON", ]$EVTYPE = "HURRICANE-TYPHOON"
+data[data$EVTYPE == "HEAT", ]$EVTYPE = "EXCESSIVE HEAT"
+```
+
+##Results
+
+Here we analyse four types of losses:
+
+1. Fatalities
+2. Injuries
+3. Property Damages
+4. Crop Damages
+
+```{r}
+
+##Fatalities
+
+fatalities <- aggregate(FATALITIES ~ EVTYPE, data = data, sum, na.rm = TRUE)
+fatal <- fatalities[fatalities$FATALITIES > 0,]
+fatalityorder <- fatal[order(fatal$FATALITIES, decreasing = TRUE),]
+head(fatalityorder)
+
+
+barplot(fatalityorder[1:10, 2], col = rainbow(10), legend.text = fatalityorder[1:10,
+    1], ylab = "Fatalities", main = "Top 10 natural events causing most fatalities")
+
+##Injuries
+
+injuries <- aggregate(INJURIES ~ EVTYPE, data = data, sum, na.rm = TRUE)
+injury <- injuries[injuries$INJURIES > 0,]
+injuryorder <- injury[order(injury$INJURIES, decreasing = TRUE),]
+head(injuryorder)
+
+barplot(injuryorder[1:10, 2], col = rainbow(10), legend.text = injuryorder[1:10,
+    1], ylab = "Injuries", main = "Top 10 natural events causing most injuries")
+```
+
+
+
+## Data shows that Tornado is the  major cause of most fatalities and injuries.
+
+```{r}
+##Property Damage
+
+data[data$PROPDMGEXP == "K", ]$PROPDMG <- data[data$PROPDMGEXP == "K", ]$PROPDMG * 1000
+data[data$PROPDMGEXP == "M", ]$PROPDMG <- data[data$PROPDMGEXP == "M", ]$PROPDMG * 1e+06
+data[data$PROPDMGEXP == "m", ]$PROPDMG <- data[data$PROPDMGEXP == "m", ]$PROPDMG * 1e+06
+data[data$PROPDMGEXP == "B", ]$PROPDMG <- data[data$PROPDMGEXP == "B", ]$PROPDMG * 1e+09
+
+propertydamages <- aggregate(PROPDMG ~ EVTYPE, data = data, sum, na.rm = TRUE)
+damage <- propertydamages[propertydamages$PROPDMG > 0,]
+damageorder <- damage[order(damage$PROPDMG, decreasing = TRUE),]
+head(damageorder)
+
+barplot(damageorder[1:10, 2], col = rainbow(10), legend.text = damageorder[1:10,
+    1], ylab = "Property Damages", main = "Top 10 natural events causing most property damages")
+
+##Crop Damage
+
+data[data$CROPDMGEXP  == "K", ]$CROPDMG <- data[data$CROPDMGEXP  == "K", ]$CROPDMG * 1000
+data[data$CROPDMGEXP  == "M", ]$CROPDMG <- data[data$CROPDMGEXP  == "M", ]$CROPDMG * 1e+06
+data[data$CROPDMGEXP  == "m", ]$CROPDMG <- data[data$CROPDMGEXP  == "m", ]$CROPDMG * 1e+06
+data[data$CROPDMGEXP  == "B", ]$CROPDMG <- data[data$CROPDMGEXP  == "B", ]$CROPDMG * 1e+09
+
+cropdamages <- aggregate(CROPDMG ~ EVTYPE, data = data, sum, na.rm = TRUE)
+cropdamage <- cropdamages[cropdamages$CROPDMG > 0,]
+cropdamageorder <- cropdamage[order(cropdamage$CROPDMG, decreasing = TRUE),]
+head(cropdamageorder)
+```
+
+## Data shows that Flood is the  major cause of property damages and Drought is the major reason for crop damages.
